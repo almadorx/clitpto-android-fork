@@ -1,7 +1,11 @@
 # Rebuilding the Clipto backend on your own domain/hosting
 
-## Verdict
+> **Status (verified live):** the original `wb-clipto` Firebase project **still exists and is
+> reachable**, with Auth / Firestore / Storage / Remote Config / Hosting active and data intact
+> behind auth — but the Android app is **delisted from Google Play** and Cloud Functions are
+> **partially degraded**. See "Reachability check" below.
 
+## Verdict
 
 **Yes, it is technically feasible — but with important caveats.**
 
@@ -12,9 +16,10 @@
 - The repo contains **no server-side code**: no Cloud Functions source, no `firestore.rules`,
   no `storage.rules`, no `firebase.json`, no `.firebaserc`, no indexes. Server logic must be
   **re-implemented** from the client's expectations.
-- The repo contains **no user data**. If the original Firebase project is gone, existing
-  cloud data is not recoverable from this repo (users can only re-import their own
-  in-app "Backup to File" exports).
+- The repo contains **no user data**, and none is publicly exposed. (A live probe shows the
+  original `wb-clipto` project **still exists** — see "Reachability check" below — but its data
+  is auth-gated and unreachable without project credentials; users can only re-import their own
+  in-app "Backup to File" exports.)
 - Several dependencies are **Google-only and/or dead**: Firebase Dynamic Links
   (`clipto.page.link`) was **shut down on 2025-08-25**, and Remote Config / Analytics /
   Crashlytics / FCM have no drop-in non-Google equivalent without client changes.
@@ -164,8 +169,12 @@ server-side tuning.
 
 - **Structure/schema: yes — completely.** Collections, field names, types, storage paths,
   queries and function signatures are all derivable from the client code.
-- **Existing user content: no.** That lives on Google's infrastructure. If the maintainer
-  abandoned the project, data may still exist in the old `wb-clipto` project (Google does not
-  delete projects immediately), but billing lapse would have disabled Functions/Firestore
-  writes. Users can still recover their own data via the in-app **Backup to File** export and
-  re-import it into a rebuilt backend.
+- **Existing user content: not from the repo — but it still exists on the live project.** The
+  reachability probe (above) confirms `wb-clipto` is reachable with Firestore / Storage / Auth /
+  Remote Config live, so the data has **not** been wiped. You still can't read it without
+  project credentials. Users can recover their own data via the in-app **Backup to File** export
+  and re-import it into a rebuilt backend.
+- **Confirmed maintenance status:** the app is **delisted from Google Play**, Cloud Functions are
+  **partially degraded** (5xx) and `startSession` / `checkUserSession` are missing → the backend
+  is *running but effectively unmaintained*. Treat it as read-only reference data, not a
+  dependency.

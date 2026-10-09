@@ -155,3 +155,22 @@ pinned to `wb-clipto` / `clipto.pro`, a self-hosted fork must (a) supply its own
 above, Auth, Remote Config), and (b) replace all `clipto.pro` / `clipto.page.link` links and
 the manifest App Link hosts. Without that, the app will talk to the original Clipto servers.
 
+## Backend / maintenance status (verified live)
+
+A read-only probe of the original infrastructure (see `BACKEND_REBUILD.md` for the full table)
+shows:
+
+- **`wb-clipto` Firebase project is still alive** — Firebase Hosting (`wb-clipto.web.app`),
+  Auth, Firestore, Storage, RTDB and Remote Config (149 live keys) all respond; `assetlinks.json`
+  is served with the real signing certs.
+- **The app is delisted from Google Play** (`com.wb.clipboard.pro` → 404; a control app returns
+  200), and **Cloud Functions are partially degraded** (most return 500/503; `startSession` /
+  `checkUserSession` return 404).
+- **`clipto.pro` website is up; `clipto.page.link` is down** (Firebase Dynamic Links shut down
+  2025-08-25).
+
+Net: the app is abandoned/delisted but its backend is **not** out of reach — it is running but
+effectively unmaintained. Data is intact behind auth and cannot be read without project
+credentials. See `BACKEND_REBUILD.md` for rebuild/hosting guidance.
+
+
