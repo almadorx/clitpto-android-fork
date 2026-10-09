@@ -251,6 +251,33 @@ etc.) can open the `.leveldb` folder inside `IndexedDB\`.
 `FirebaseDaoHelper.ATTR_*` constants, and import via the Android app's *Restore from File*.
 
 
+### 3.5 Confirmed contents of `databases.db` and the IndexedDB LevelDB
+
+**`databases\databases.db`** is a **SQLite "SQLite format 3"** file that is the Chromium **WebSQL
+catalog** — tables `Databases` (origin, name, description, estimated_size), `sqlite_sequence`,
+and `meta` (`version 2`, `last_compatible_version 1`). It **lists** WebSQL databases; it is *not*
+the note store. Check it with any SQLite viewer (`sqlite3 databases.db ".dump"`), but expect it
+to be near-empty.
+
+**`IndexedDB\file__0.indexeddb.leveldb\`** is the LevelDB holding **all** the origin's IndexedDB
+databases. A dump already shows:
+- `idb_cmp1` — Chromium's IndexedDB key comparator.
+- **`firebaseLocalStorage`** — the Firebase JS SDK's **auth** IndexedDB database.
+- **`c1:909984326025:web:b53edfb0db670449e58158`** and `[DEFAULT]`, `firebase`,
+  `last_successful_fetch_timestamp_millis` — i.e. the app authenticates with the **web app config**
+  (`appId 1:909984326025:web:b53edfb0db670449e58158`, the same one served from
+  `wb-clipto.web.app/__/firebase/init.json`).
+
+So the desktop app is effectively the **web client** of the `wb-clipto` project, and the LevelDB
+folder contains **both** the auth store **and** the Firestore offline cache. Your **notes** are in
+the `firestore/[projectId]/[databaseId]` database inside this same LevelDB (look for keys/values
+containing `firestore` and your note text).
+
+**Important correction to §3.4:** point the dump tool at the **folder**
+`…\IndexedDB\file__0.indexeddb.leveldb` (the LevelDB directory), **not** at an individual
+`000009.ldb` file — LevelDB needs the `CURRENT`/`MANIFEST`/`*.ldb`/`*.log` set together.
+
+
 ## Related documents
 - `REVIEW.md` — user-facing feature review and architecture overview.
 - `BACKEND_REBUILD.md` — external-domain/Firebase backend map, rebuild options, live
