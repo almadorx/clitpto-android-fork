@@ -24,6 +24,11 @@ from the source, resources and a read-only probe of the original backend.
   (service retired 2025-08-25).
 - **Architecture:** local-first on **ObjectBox**; **Firebase is only the sync/transport layer**
   (~26 files); a JSON import/export "vault" format already exists; UI is classic Android Views.
+- **Desktop app:** exists (`clipto-pro/Desktop`, latest **v7.2.17, Nov 2021**) but the repo is
+  **binary-only (no source)**; it's an **Electron** app, **cloud-sync-only** (no local
+  import/export), stores data as Chromium **LevelDB** under `%APPDATA%\Roaming\Clipto`, and the
+  maintainer is **MIA**. See `LOCAL_VAULT_AND_DESKTOP.md` §3.
+
 
 ## Repository layout (high level)
 

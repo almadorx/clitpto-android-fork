@@ -60,6 +60,10 @@ has been **removed from Google Play**, and some backend pieces are degraded.
   own project as described above.
 - The live Remote Config (149 keys) and `assetlinks.json` are useful **reference data** for
   reproducing the original setup.
+- The **official desktop app** (`clipto-pro/Desktop`, binary-only/Electron) also depends on this
+  same backend for sync and cannot be re-pointed or extended (closed source) — see
+  `LOCAL_VAULT_AND_DESKTOP.md` §3.
+
 
 ## What the client expects (the contract we DO have)
 

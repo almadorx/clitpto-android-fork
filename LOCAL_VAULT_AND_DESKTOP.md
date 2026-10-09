@@ -109,6 +109,59 @@ plain JSON, and `converter` proves the repo already produces JVM artifacts.
 ```
 Keep it per-item JSON (not one big file) so Dropbox/OneDrive conflicts are mergeable and
 
+## 3. The official Clipto Desktop app — reality check
+
+There **is** an official Windows/macOS/Linux desktop app, but it is a dead end for a
+local-folder-vault workflow.
+
+### What exists
+- Releases: `github.com/clipto-pro/Desktop/releases` — latest **v7.2.17 (2021-11-15)**; assets
+  `clipto-7.2.17.exe` (Windows, ~69 MB), `.dmg` (macOS), `.AppImage` (Linux) + electron-updater
+  `latest*.yml`.
+- The `clipto-pro` org has **only two repos**: `Desktop` and `Android`. Both are
+  **release-binary-only** — the `Desktop` repo contains **just a `README.md` + PNG screenshots**
+  (`git tree` confirms no source). All 21 forks are the same size (no source either).
+- **Technology: Electron** (electron-builder/electron-updater artifacts; Chromium **LevelDB**
+  data files). So the only "source" obtainable is the bundled/minified `app.asar` inside the
+  installed app.
+
+### Why there's no JSON import (maintainer's own words)
+From issues [#143](https://github.com/clipto-pro/Desktop/issues/143) and
+[#64](https://github.com/clipto-pro/Desktop/issues/64), maintainer **atrashler**:
+- *"On Windows there is no such option to import/export notes to local files (only on Android
+  now). Now you can use cloud sync…"*
+- *"Desktop app is the same, but does not support import/export yet."*
+- *"Now it is only possible to do by using cloud account."*
+- *"The app uses Firebase Cloud to store and sync data across all platforms."*
+
+So the desktop app is **cloud-sync-only by design**; import/export was requested but never added.
+
+### Where the desktop data lives (useful for recovery/migration)
+- Path: **`C:\Users\<USER>\AppData\Roaming\Clipto`** (Windows).
+- Contents are a Chromium **LevelDB/IndexedDB** store — `databases.db`, `*.ldb`, `*.log` — not
+  JSON. Users report recognizable note text inside the `.ldb` files.
+- Maintainer's backup advice: *"Probably it is better to copy the whole directory."*
+
+### Maintenance status
+- Issue [#156 "State of the project?"](https://github.com/clipto-pro/Desktop/issues/156):
+  the maintainer (`atrashler`) has been **MIA for years** and reportedly has no intention to
+  continue. The app is **delisted from Google Play**, sync subscription options are broken, and
+  users report being billed without working sync. → Treat the desktop app as **abandoned**.
+
+### Practical options for a Windows + Android local-vault setup
+1. **Migrate once, then go vault:** read notes out of the desktop **LevelDB** store
+   (`%APPDATA%\Roaming\Clipto`) with a LevelDB/IndexedDB reader, convert to the Android JSON
+   backup format, then stop using the desktop app.
+2. **Run the Android app on Windows** (emulator + shared folder) — it *does* have JSON
+   import/export, so it fits the folder vault (see §2, option 1).
+3. **Build a small custom Windows app** against the vault format (see §2, options 2–3).
+4. **Reverse-engineer the Electron app:** unpack `resources/app.asar` from the installed app to
+   read/patch the bundled JS (the only available "source"). Fragile, unsupported, and likely
+   contrary to the app's terms — not recommended.
+5. **Keep using cloud sync** while the `wb-clipto` backend is alive — but it is unmaintained and
+   the sync-plan/billing path is broken, so this is not a long-term option.
+
+
 ## Related documents
 - `REVIEW.md` — user-facing feature review and architecture overview.
 - `BACKEND_REBUILD.md` — external-domain/Firebase backend map, rebuild options, live
