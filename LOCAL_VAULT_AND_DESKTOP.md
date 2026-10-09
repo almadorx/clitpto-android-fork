@@ -203,6 +203,54 @@ browser) — text notes appear as recognizable strings inside.
 5. Import the resulting JSON via the **Android** app's *Restore from File*.
 
 
+### 3.3 Data profile map (confirmed contents of `%APPDATA%\Roaming\Clipto`)
+
+The confirmed profile contains the standard Chromium/Electron `userData` layout. Where the
+actual note data sits:
+
+| Item | What it is | Relevance |
+|---|---|---|
+| `IndexedDB\` | Chromium **IndexedDB** (LevelDB) | **Primary store** — the Firebase JS SDK's Firestore offline persistence (`enableIndexedDbPersistence`) writes documents here as `firestore/[projectId]/[databaseId]`. Note text appears as readable strings. |
+| `Local Storage\leveldb\` | Web **localStorage** (LevelDB) | Settings/session/flags; may also cache data. |
+| `databases\` (`databases.db`) | legacy **WebSQL** catalog | The 28 KB `databases.db` from issue #162 lives here — a catalog, not the notes. |
+| `config.json` | app config (plain JSON) | **Read this first** — likely app/user config and maybe the data path. |
+| `Cookies`, `Cookies-journal`, `Network Persistent State` | session/auth | Firebase auth session; keep for reference, not needed for notes. |
+| `Cache\`, `GPUCache\`, `Code Cache\`, `blob_storage\` | caches/blobs | Attachments may pass through `blob_storage\`; caches are disposable. |
+| `QuotaManager*`, `Local State`, `Preferences`, `lockfile`, `.updaterId` | Chromium bookkeeping / electron-updater | Not note data. |
+
+**So the notes are in `IndexedDB\` (Firestore cache) and possibly `Local Storage\leveldb\`.**
+
+### 3.4 Reading the LevelDB / IndexedDB store
+
+Always **close the app first** and **copy the profile** before opening it.
+
+**Option A — no code (DevTools).** Launch Chrome/Chromium with a *copy* of the profile as its
+user-data-dir, open DevTools → **Application → IndexedDB / Local Storage**, and browse the
+`firestore/...` database. (Use a copy; never point Chrome at the live profile.)
+
+**Option B — dump it with Node** (fastest for text extraction):
+```js
+// npm i classic-level   then:  node dump.js "C:\path\to\IndexedDB\<db>.leveldb"
+const { ClassicLevel } = require('classic-level');
+(async () => {
+  const db = new ClassicLevel(process.argv[2], { keyEncoding: 'buffer', valueEncoding: 'buffer' });
+  await db.open();
+  for await (const [k, v] of db.iterator()) {
+    const s = v.toString('utf8');
+    if (/[ -~]{6,}/.test(s)) console.log('---\n' + s.replace(/[^\x20-\x7e\n]/g, '.'));
+  }
+  await db.close();
+})();
+```
+
+**Option C — GUI viewers:** any LevelDB viewer (VS Code "LevelDB" extension, `leveldb-viewer`,
+etc.) can open the `.leveldb` folder inside `IndexedDB\`.
+
+**Then:** map the recovered documents to the Android **`CliptoBackup`** JSON schema
+(`notes` / `filters` / `settings`), reusing the field names from the Android
+`FirebaseDaoHelper.ATTR_*` constants, and import via the Android app's *Restore from File*.
+
+
 ## Related documents
 - `REVIEW.md` — user-facing feature review and architecture overview.
 - `BACKEND_REBUILD.md` — external-domain/Firebase backend map, rebuild options, live
