@@ -278,6 +278,34 @@ containing `firestore` and your note text).
 `000009.ldb` file — LevelDB needs the `CURRENT`/`MANIFEST`/`*.ldb`/`*.log` set together.
 
 
+### 3.6 Can I import Android JSON into the desktop app?
+
+**Directly: no.** The desktop app has **no file import** (developer-confirmed) and is
+closed-source, so there is no built-in way to feed it a JSON file.
+
+**Indirectly: yes — through the account/cloud**, which is the app's *only* data path.
+
+Recommended round-trip (supported workflow):
+1. **Sign the Android app into an account.**
+2. On Android, use *Restore from File* with your exported JSON (Android supports import).
+3. Let Android sync the notes to the cloud (Firebase `wb-clipto`).
+4. **Sign the desktop app into the same account** → the notes appear via cloud sync.
+
+Caveats:
+- Both clients share the same backend + account; the desktop app is **cloud-sync-only by design**.
+- Free sync plan limit is ~300 notes, and the subscription/billing path is **broken** → sync may
+  be limited or fail.
+- If unauthorized, there is **no sync at all** (offline only).
+- The **web editor** (`clipto.pro/#/editor`) can serve as a bridge/verification step between the
+  two apps.
+- Unsupported options: patch `app.asar` to add an importer; or write to Firestore directly with
+  the Firebase **web** SDK using the public web config (`apiKey AIzaSyDlv…`,
+  `appId 1:909984326025:web:b53edfb0db670449e58158`) plus your own credentials. Writing into the
+  desktop's IndexedDB Firestore cache by hand is **not** viable (version-specific binary format).
+
+If the real goal is the **local folder vault** (§1–§2), you can skip the desktop app entirely.
+
+
 ## Related documents
 - `REVIEW.md` — user-facing feature review and architecture overview.
 - `BACKEND_REBUILD.md` — external-domain/Firebase backend map, rebuild options, live
