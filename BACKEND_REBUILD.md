@@ -3,6 +3,22 @@
 ## Verdict
 
 
+**Yes, it is technically feasible — but with important caveats.**
+
+- The repo contains the **complete client↔server contract**: Firestore collection layout,
+  every document field name/type, Cloud Storage paths, auth providers + custom-token scheme,
+  and the exact names of every callable Cloud Function. That is enough to **recreate the
+  structure** of the backend exactly.
+- The repo contains **no server-side code**: no Cloud Functions source, no `firestore.rules`,
+  no `storage.rules`, no `firebase.json`, no `.firebaserc`, no indexes. Server logic must be
+  **re-implemented** from the client's expectations.
+- The repo contains **no user data**. If the original Firebase project is gone, existing
+  cloud data is not recoverable from this repo (users can only re-import their own
+  in-app "Backup to File" exports).
+- Several dependencies are **Google-only and/or dead**: Firebase Dynamic Links
+  (`clipto.page.link`) was **shut down on 2025-08-25**, and Remote Config / Analytics /
+  Crashlytics / FCM have no drop-in non-Google equivalent without client changes.
+
 ## Reachability check — is `wb-clipto` still alive? (probed live, read-only)
 
 **Result: YES — the `wb-clipto` Firebase project still exists, is reachable, and still has
@@ -39,22 +55,6 @@ has been **removed from Google Play**, and some backend pieces are degraded.
   own project as described above.
 - The live Remote Config (149 keys) and `assetlinks.json` are useful **reference data** for
   reproducing the original setup.
-
-**Yes, it is technically feasible — but with important caveats.**
-
-- The repo contains the **complete client↔server contract**: Firestore collection layout,
-  every document field name/type, Cloud Storage paths, auth providers + custom-token scheme,
-  and the exact names of every callable Cloud Function. That is enough to **recreate the
-  structure** of the backend exactly.
-- The repo contains **no server-side code**: no Cloud Functions source, no `firestore.rules`,
-  no `storage.rules`, no `firebase.json`, no `.firebaserc`, no indexes. Server logic must be
-  **re-implemented** from the client's expectations.
-- The repo contains **no user data**. If the original Firebase project is gone, existing
-  cloud data is not recoverable from this repo (users can only re-import their own
-  in-app "Backup to File" exports).
-- Several dependencies are **Google-only and/or dead**: Firebase Dynamic Links
-  (`clipto.page.link`) was **shut down on 2025-08-25**, and Remote Config / Analytics /
-  Crashlytics / FCM have no drop-in non-Google equivalent without client changes.
 
 ## What the client expects (the contract we DO have)
 
