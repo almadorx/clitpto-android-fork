@@ -108,4 +108,10 @@ plain JSON, and `converter` proves the repo already produces JVM artifacts.
   meta.json                # schema version, device ids, last-sync
 ```
 Keep it per-item JSON (not one big file) so Dropbox/OneDrive conflicts are mergeable and
+
+## Related documents
+- `REVIEW.md` — user-facing feature review and architecture overview.
+- `BACKEND_REBUILD.md` — external-domain/Firebase backend map, rebuild options, live
+  reachability probe.
+
 Android's `FileObserver` + Windows' `FileSystemWatcher` can both diff cheaply.

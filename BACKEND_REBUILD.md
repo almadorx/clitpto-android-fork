@@ -177,4 +177,15 @@ server-side tuning.
 - **Confirmed maintenance status:** the app is **delisted from Google Play**, Cloud Functions are
   **partially degraded** (5xx) and `startSession` / `checkUserSession` are missing → the backend
   is *running but effectively unmaintained*. Treat it as read-only reference data, not a
+
+## Alternative: no backend at all (local folder vault)
+Instead of rebuilding a server, the app can be re-pointed at a **local folder vault** synced by
+Dropbox/OneDrive/etc. The app is already local-first (ObjectBox), so this is a focused refactor
+rather than a rewrite. See `LOCAL_VAULT_AND_DESKTOP.md` for the modification map, effort and the
+suggested vault format.
+
+## Related documents
+- `REVIEW.md` — user-facing feature review and architecture overview.
+- `LOCAL_VAULT_AND_DESKTOP.md` — local folder vault + low-cost Windows desktop companion.
+
   dependency.

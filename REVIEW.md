@@ -1,10 +1,31 @@
 # Clipto (Android) — User-Facing Feature Review
 
 Clipto (`com.wb.clipboard`, app module `app`, package `clipto`) is an offline-first
-**notepad + clipboard manager** for Android. There is no README in the repo; this review
+**notepad + clipboard manager** for Android. The original repo shipped no README; this review
 was derived from `AndroidManifest.xml`, the navigation graph (`res/navigation/nav_main.xml`),
 the string resources (`res/values/strings.xml`), and the `clipto.presentation` /
 `clipto.domain` code.
+
+## Architecture overview
+
+- **Offline-first**: all reads/writes go through a local **ObjectBox** database
+  (`dao/objectbox/*`: `ClipBox`, `FileRefBox`, `FilterBox`, `SettingsBox`, `UserBox`,
+  `LinkPreviewBox`). The UI is driven from ObjectBox via the `store/*` state holders.
+- **Sync = Firebase**: Firestore is *only* the transport. `dao/firebase/*` sets up snapshot
+  listeners and mirrors changes into ObjectBox; it is invoked from the repositories
+  (`ClipRepository`, `FileRepository`, `FilterRepository`, `UserRepository`).
+- **Server features = Firebase Functions** (`api/IApi` → `Api`): session/billing, public links,
+  snippet-kit public library, link previews, URL shortening.
+- **Auth = Firebase Auth / FirebaseUI** (`presentation/auth`, `UserRepository`).
+- **Config = Firebase Remote Config** — 129 keys, with bundled defaults in
+  `res/xml/remote_config_defaults.xml`, so the app runs even without it.
+- **Import/export already exists**: a JSON "vault" format in `backup/` (`CliptoBackup` = notes +
+  tags/filters/snippet-kits + settings), plus importers for Clipper, SimpleNote, Google Keep,
+  ClipStack and ClipboardManager. Uses SAF (`ACTION_OPEN_DOCUMENT` / `ACTION_CREATE_DOCUMENT`).
+- **Modules**: `app` (Android), `common-presentation` (Android helpers), `converter` (pure-JVM
+  tool — proof the repo already builds non-Android artifacts).
+- **Firebase coupling is concentrated in ~26 files**; the `domain` model is ~80% portable to JVM.
+- **UI is classic Android Views** (186 XML layouts + viewBinding, no Compose).
 
 ## Core data model
 - **Notes (Clips)** — text notes with title, body, tags, folder, starred flag, color,
@@ -172,5 +193,12 @@ shows:
 Net: the app is abandoned/delisted but its backend is **not** out of reach — it is running but
 effectively unmaintained. Data is intact behind auth and cannot be read without project
 credentials. See `BACKEND_REBUILD.md` for rebuild/hosting guidance.
+
+
+## Related documents
+- `BACKEND_REBUILD.md` — external-domain/Firebase backend map, rebuild options, and the live
+  reachability probe of `wb-clipto`.
+- `LOCAL_VAULT_AND_DESKTOP.md` — replacing Firebase with a local folder vault and building a
+  low-cost Windows desktop companion.
 
 
