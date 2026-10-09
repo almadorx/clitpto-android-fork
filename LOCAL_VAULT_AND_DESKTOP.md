@@ -162,6 +162,47 @@ So the desktop app is **cloud-sync-only by design**; import/export was requested
    the sync-plan/billing path is broken, so this is not a long-term option.
 
 
+### 3.1 Install folder vs data folder — and how to get the "source"
+
+The listed files (`Clipto.exe`, `resources\`, `locales\`, `*.dll`, `snapshot_blob.bin`,
+`LICENSE.electron.txt`, `LICENSES.chromium.html`, `*.pak`, `icudtl.dat`) are the **installed
+program directory**. They **confirm Electron** (the Electron/Chromium runtime + license files).
+
+- `resources\app.asar` — **the entire application code, packed.** This *is* the "source" that
+  isn't on GitHub (bundled/minified JS). Extract it:
+  ```bat
+  :: needs Node.js
+  npx @electron/asar extract "resources\app.asar" app_src
+  ```
+  Then read `app_src\...` — look for the `main`/`renderer` bundles, `firebase`/`firestore`
+  strings, the collection names (should mirror Android: `u/{uid}/c`, `u/{uid}/f`, `u/{uid}/fs`…),
+  and any `app.getPath('userData')` usage. (7-Zip with the Asar7z plugin also works.)
+- `resources\app.asar.unpacked\` — native modules, if any.
+- `locales\`, `*.pak`, `icudtl.dat`, `ffmpeg.dll`, `libEGL.dll`, `vk_swiftshader*` — Chromium runtime.
+
+**Your notes are NOT in these program files.** They live in a Chromium profile as **LevelDB /
+IndexedDB** (`Local Storage\leveldb\*.ldb`, `IndexedDB\`, `*.db`). Find them with:
+```powershell
+Get-ChildItem -Recurse "$env:APPDATA\Clipto" -Include *.ldb,*.log,*.db,databases.db |
+  Select-Object FullName, Length, LastWriteTime
+```
+If the app's `userData` equals its install dir, the profile is mixed into this same tree;
+otherwise check `%APPDATA%\Clipto` and any `Local Storage`/`IndexedDB` subfolders. Read the
+`.ldb`/`.log` with a LevelDB/IndexedDB viewer (Node `level`, `chrome-leveldb`, or an IndexedDB
+browser) — text notes appear as recognizable strings inside.
+
+### 3.2 Getting your notes out of LevelDB (recovery/migration recipe)
+
+1. Close the Clipto desktop app (so LevelDB locks are released).
+2. Copy the whole profile folder (maintainer's advice) before touching it.
+3. Open the LevelDB/IndexedDB store and locate the `firestore` database and the `Local Storage`
+   store; export the raw key/value entries.
+4. Map the recovered documents to the **Android JSON backup schema** (`CliptoBackup`: `notes`,
+   `filters`, `settings`) — the field names mirror the Firestore attributes in
+   `FirebaseDaoHelper` (`ATTR_*`) used by the Android app.
+5. Import the resulting JSON via the **Android** app's *Restore from File*.
+
+
 ## Related documents
 - `REVIEW.md` — user-facing feature review and architecture overview.
 - `BACKEND_REBUILD.md` — external-domain/Firebase backend map, rebuild options, live
