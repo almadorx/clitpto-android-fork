@@ -2,6 +2,44 @@
 
 ## Verdict
 
+
+## Reachability check — is `wb-clipto` still alive? (probed live, read-only)
+
+**Result: YES — the `wb-clipto` Firebase project still exists, is reachable, and still has
+live configuration and (auth-gated) data. It has NOT been wiped.** However, the Android app
+has been **removed from Google Play**, and some backend pieces are degraded.
+
+| Probe (read-only) | Result | Interpretation |
+|---|---|---|
+| DNS `wb-clipto.firebaseio.com` / `.appspot.com` / `.web.app` / `.firebaseapp.com` | all resolve | project exists |
+| Identity Toolkit w/ Android key | `403 API_KEY_ANDROID_APP_BLOCKED`, `consumer: projects/909984326025` | project **live**, key restricted to Android |
+| Hosting `wb-clipto.web.app` | `200` — serves the Clipto web app | Firebase Hosting active |
+| Hosting `__/firebase/init.json` | returns web config (projectId `wb-clipto`, appId `1:909984326025:web:...`, storageBucket, sender 909984326025) | project active |
+| `/.well-known/assetlinks.json` | `200` — lists `com.wb.clipboard.debug` + `com.wb.clipboard.pro` with real cert fingerprints | App Links verification **active** |
+| Firebase Auth `signInWithCustomToken` (web key) | `400 INVALID_CUSTOM_TOKEN` (format only) | Auth **enabled** |
+| Remote Config fetch | **149 live entries**, `app_latest_version=4.3.5`, changelog text, `sync_plan_activated=true`, `sync_plan_notes_free_limit=300` | Remote Config **live & configured** |
+| Firestore `databases/(default)` (no auth) | `401 UNAUTHENTICATED` | Firestore **enabled**, data behind auth |
+| Storage bucket list | `400` "rules_version = 1" message | bucket **exists**, rules configured |
+| GCS bucket | `403` | exists, not public |
+| RTDB `firebaseio.com/.json` | `Permission denied` | RTDB instance exists, locked |
+| Cloud Functions `*.cloudfunctions.net` | `deleteAccount`, `generateAppLink`, `getLinkShortenUrl`, `filePublicLinkGet`, `snippet_kit_list`, `snippet_kit_get`, `snippet_get`, `user_data_upgrade`, `getLinkPreview`, `getLinkPlaybackUrl` → `500/503` (deployed but erroring); `startSession`, `checkUserSession`, `notePublicLinkGenerate`, `notePublicLinkRemove` → `404` (name absent) | Functions deployed, **partially degraded** |
+| `clipto.pro` | `200` | website up |
+| `clipto.page.link` | `400/404` | Dynamic Links **down** (deprecated 2025-08-25) |
+| Google Play `com.wb.clipboard.pro` | `404` (control app `whatsapp` → `200`) | **app delisted/removed from Play** |
+
+### What this means
+- The maintainer's cloud **data and configuration are intact** on Google's infrastructure,
+  but you still **cannot access it** without project credentials (and no public/auth path
+  exposes it).
+- The app being **delisted from Play** plus **degraded functions** (5xx) and **missing
+  `startSession`/`checkUserSession`** suggests the backend is *running but effectively
+  unmaintained*. Do not build a new product on it.
+- Because the project is still live, it is worth trying to **contact the maintainer / recover
+  the project or an export** before investing in a full rebuild. Otherwise, proceed with your
+  own project as described above.
+- The live Remote Config (149 keys) and `assetlinks.json` are useful **reference data** for
+  reproducing the original setup.
+
 **Yes, it is technically feasible — but with important caveats.**
 
 - The repo contains the **complete client↔server contract**: Firestore collection layout,
