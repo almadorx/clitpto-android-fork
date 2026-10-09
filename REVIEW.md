@@ -92,3 +92,66 @@ Inspiring Support, Time Machine (backup/restore), and Hotkey Observer (in-app/gl
 - `clipto.presentation.clip`, `.../file`, `.../snippets`, `.../folder`, `.../filter`,
   `.../runes`, `.../settings`, `.../account`, `.../plan`, `.../lockscreen`.
 - `clipto.action.*` — domain actions (save/copy/delete clips, kits, filters, sessions).
+
+## External domain pairing
+
+**Yes — the app is hard-wired to its own external domain `clipto.pro` and to the Firebase
+project `wb-clipto`. It is not self-hostable/generic out of the box.**
+
+### 1. `clipto.pro` — the app's own site/domain
+Declared as Android App Links (`android:autoVerify="true"`) in `AndroidManifest.xml`, and
+used everywhere via `buildConfigField`s in `app/build.gradle`:
+
+| BuildConfig field | Value |
+|---|---|
+| `kitLink` | `https://clipto.pro/#/kit` (snippet-kit install deep links) |
+| `referralLink` | `https://clipto.pro/#` |
+| `appSiteLink` | `https://clipto.pro/#/editor` |
+| `appDownloadLink` | `https://clipto.pro/#/download` |
+| `supportProductLink` | `https://clipto.pro/#/pricing` |
+| `appAuthLink` | `https://clipto.pro/#/__auth_m` (web sign-in) |
+| `privacyPolicyUrl` | `https://clipto.pro/#/policy` |
+| `tosUrl` | `https://clipto.pro/#/terms` |
+
+Manifest deep links: `clipto.pro` host with `pathPrefix="/kit"` (kit install), plus a custom
+OAuth callback scheme `oauth-callback://clipto`. `AppUtils.fromSnippetKitUri` /
+`fromReferralUri` parse incoming `clipto.pro` links.
+
+### 2. `clipto.page.link` — Firebase Dynamic Links
+`android:host="clipto.page.link"` (http/https, autoVerify) and `BuildConfig.dynamicLink`
+are used for shareable/expiring note links and the `generateAppLink` cloud function.
+
+### 3. Firebase project `wb-clipto` (the actual backend)
+From `app/google-services.json`:
+- `project_id`: **wb-clipto**
+- `firebase_url`: `https://wb-clipto.firebaseio.com`
+- `storage_bucket`: `wb-clipto.appspot.com`
+- Apps: `com.wb.clipboard.debug`, `com.wb.clipboard.pro`
+- API key: `AIzaSyCQVM4P1xcIJtrWkOTmAoMVcTlf4rc_Z_Y` (also reused as `youtube_data_api_key` in remote config)
+
+All server communication goes through this project: **Firestore** (notes/files/filters,
+per-user collections), **Cloud Storage** (attachments), **Firebase Auth**, **Remote Config**,
+**Analytics/Crashlytics**, and **Cloud Functions** (`FunctionsFunctionsHelper` →
+`FirebaseFunctions.getInstance().getHttpsCallable(...)`). Cloud-function names called by
+`Api.kt`: `startSession`, `checkUserSession`, `deleteAccount`, `generateAppLink`,
+`getLinkShortenUrl`, `notePublicLinkGenerate`, `notePublicLinkRemove`, `filePublicLinkGet`.
+
+### 4. Runtime-overridable links (Firebase Remote Config)
+`res/xml/remote_config_defaults.xml` points most instructional/support links at `clipto.pro`
+(ADB instruction, notification-paste instruction, global-copy instruction, FAQ, invite/reward,
+changelog, snippet-kit bonus, etc.), plus social/community domains: `github.com`,
+`reddit.com/r/cliptopro`, `facebook.com/cliptopro`, `discord.gg`, `crowdin.com`, `play.google.com`,
+`dontkillmyapp.com`.
+
+### 5. Third-party service domains (feature-specific, not app backend)
+`google.com` (search/maps/translate), `youtube.com` + `youtube.googleapis.com` + `googlevideo`,
+`twitter.com`, `reddit.com`, `stackoverflow.com`, `duckduckgo.com`, `wikipedia.org`,
+`player.vimeo.com`, `coub.com`, `aparat.com`, `zendesk.jfrog.io` (Gradle repo), and Zapier.
+
+### Implication for this fork
+The GitHub remote is `almadorx/clitpto-android-fork`. Because the backend and deep links are
+pinned to `wb-clipto` / `clipto.pro`, a self-hosted fork must (a) supply its own
+`google-services.json` + Firebase project (Firestore rules, Storage, the Cloud Functions
+above, Auth, Remote Config), and (b) replace all `clipto.pro` / `clipto.page.link` links and
+the manifest App Link hosts. Without that, the app will talk to the original Clipto servers.
+
